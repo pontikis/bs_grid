@@ -1,3 +1,6 @@
+bs_grid
+=======
+
 Bootstrap Datagrid jQuery plugin
 
 Project page (SOON): [https://www.pontikis.net/labs/bs_grid][HOME]
