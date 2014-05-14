@@ -39,7 +39,7 @@ Download [here][DOWNLOAD]
 [DOWNLOAD]: https://github.com/pontikis/bs_grid/archive/master.zip
 
 
-SCREENSHOTS
+Screenshots
 -----------
 ![bs_grid sample1][sample1]
 [sample1]: https://raw.github.com/pontikis/bs_grid/master/screenshots/sample1.png
