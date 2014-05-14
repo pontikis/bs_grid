@@ -1,0 +1,41 @@
+{
+    "name": "bs_grid",
+    "version": "0.9.1",
+    "title": "Bootstrap Datagrid",
+    "author": {
+        "name": "Christos Pontikis",
+        "email": "christos@pontikis.net",
+        "url": "http://www.pontikis.net"
+    },
+    "licenses": [
+        {
+            "type": "MIT",
+            "url": "https://raw.github.com/pontikis/bs_grid/master/MIT_LICENSE"
+        }
+    ],
+    "dependencies": {
+        "jquery": ">=1.8",
+        "bs_pagination": ">=1.0.2",
+        "jui_filter_rules": ">=1.0.4",
+        "momentjs": ">=2.2.1",
+        "bowser": ">=0.3.1"
+    },
+    "description": "bs_grid is a jQuery Datagrid plugin, based on Twitter Bootstrap. Advanced row selection, sorting, pagination and filtering. Fully customizable, responsive web design, localization.",
+    "homepage": "http://www.pontikis.net/labs/bs_grid",
+    "docs": "http://www.pontikis.net/labs/bs_grid/docs",
+    "demo": "http://www.pontikis.net/labs/bs_grid/demo",
+    "download": "https://github.com/pontikis/bs_grid/archive/master.zip",
+    "keywords": [
+        "grid",
+        "datagrid",
+        "table",
+        "database",
+        "paging",
+        "sorting",
+        "searching",
+        "responsive",
+        "bootstrap",
+        "ui"
+    ],
+    "bugs": "https://github.com/pontikis/bs_grid/issues"
+}
