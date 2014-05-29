@@ -9,7 +9,7 @@ Copyright Christos Pontikis [http://www.pontikis.net][copyright]
 License [MIT][mit]
 [mit]: https://raw.github.com/pontikis/bs_grid/master/MIT_LICENSE
 
-Release: 0.9.1 (09 May 2014) - View CHANGELOG [here][CHANGELOG]
+Release: 0.9.2 (28 May 2014) - View CHANGELOG [here][CHANGELOG]
 [CHANGELOG]: https://raw.github.com/pontikis/bs_grid/master/CHANGELOG.md
 
 

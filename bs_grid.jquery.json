@@ -1,6 +1,6 @@
 {
     "name": "bs_grid",
-    "version": "0.9.1",
+    "version": "0.9.2",
     "title": "Bootstrap Datagrid",
     "author": {
         "name": "Christos Pontikis",
@@ -16,9 +16,8 @@
     "dependencies": {
         "jquery": ">=1.8",
         "bs_pagination": ">=1.0.2",
-        "jui_filter_rules": ">=1.0.4",
-        "momentjs": ">=2.2.1",
-        "bowser": ">=0.3.1"
+        "jui_filter_rules": ">=1.0.5",
+        "momentjs": ">=2.2.1"
     },
     "description": "bs_grid is a jQuery Datagrid plugin, based on Twitter Bootstrap. Advanced row selection, sorting, pagination and filtering. Fully customizable, responsive web design, localization.",
     "homepage": "http://www.pontikis.net/labs/bs_grid",
