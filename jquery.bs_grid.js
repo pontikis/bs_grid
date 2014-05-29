@@ -3,7 +3,7 @@
  *               <p>License MIT
  *               <br />Copyright Christos Pontikis <a href="http://www.pontikis.net">http://www.pontikis.net</a>
  *               <br />Project page <a href="http://www.pontikis.net/labs/bs_grid/">http://www.pontikis.net/labs/bs_grid/</a>
- * @version 0.9.1 (09 May 2014)
+ * @version 0.9.2 (28 May 2014)
  * @author Christos Pontikis http://www.pontikis.net
  * @requires jquery >= 1.8, twitter bootstrap >= 2, bs_pagination plugin, jQuery UI sortable (optional), jui_filter_rules plugin >= 1.0.4 (optional)
  */
@@ -68,34 +68,32 @@
                         bootstrap_version = "2";
                     }
                     var defaults = methods.getDefaults.call(elem, bootstrap_version);
-                    settings = $.extend({}, defaults, options);
+                    // deep merge ('true' arg) is required, as there are object attibutes (paginationOptions, filterOptions)
+                    settings = $.extend(true, {}, defaults, options);
                 } else {
-                    settings = $.extend({}, settings, options);
+                    settings = $.extend(true, {}, settings, options);
                 }
                 elem.data(pluginName, settings);
 
                 // initialize plugin status
                 if(typeof  elem.data(pluginStatus) === "undefined") {
                     elem.data(pluginStatus, {});
-                    elem.data(pluginStatus)["selected_ids"] = [];
-                    elem.data(pluginStatus)["filter_rules"] = [];
-                } else {
-                    if(!settings.row_primary_key) {
-                        elem.data(pluginStatus)["selected_ids"] = [];
-                    } else {
-                        switch(settings.rowSelectionMode) {
-                            case "single":
-                                if(elem.data(pluginStatus)["selected_ids"].length > 1) {
-                                    elem.data(pluginStatus)["selected_ids"] = [];
-                                }
-                                break;
-                            case false:
-                                elem.data(pluginStatus)["selected_ids"] = [];
-                                break;
-                        }
-                    }
                 }
 
+                if(!settings.row_primary_key) {
+                    settings.selected_ids = [];
+                } else {
+                    switch(settings.rowSelectionMode) {
+                        case "single":
+                            if(settings.selected_ids.length > 1) {
+                                settings.selected_ids = [];
+                            }
+                            break;
+                        case false:
+                            settings.selected_ids = [];
+                            break;
+                    }
+                }
                 var container_id = elem.attr("id");
 
                 // apply container style
@@ -257,7 +255,7 @@
 
                     tools_html += '<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="' + rsc_bs_dg.select + '">';
                     tools_html += '<span class="' + settings.selectButtonIconClass + '"></span>';
-                    tools_html += '<span id="' + selected_rows_id + '" class="' + settings.selectedRowsClass + '">' + elem.data(pluginStatus)["selected_ids"].length + '</span>';
+                    tools_html += '<span id="' + selected_rows_id + '" class="' + settings.selectedRowsClass + '">' + settings.selected_ids.length + '</span>';
                     tools_html += '<span class="caret"></span>';
                     tools_html += '</button>';
 
@@ -655,20 +653,25 @@
                             bootstrap_version: settings.bootstrap_version,
                             onValidationError: function(event, data) {
                                 elem.triggerHandler("onDatagridError", data);
+                            },
+                            onSetRules: function() {
                             }
                         };
                     filter_options = $.extend({}, filter_options, bs_grid_internal_filter_options);
-
                     elem_filter_rules.jui_filter_rules(filter_options);
 
-                    elem_filter_container.hide();
+                    if(filter_options.filter_rules.length > 0) {
+                        elem_filter_container.show();
+                    } else {
+                        elem_filter_container.hide();
+                    }
 
                     /* filter toogle */
                     elem_tools.off("click", "#" + filter_toggle_id).on("click", "#" + filter_toggle_id, function() {
 
                         if(elem_filter_container.is(":visible")) {
                             elem_filter_container.slideUp();
-                            if(elem.data(pluginStatus)["filter_rules"].length > 0) {
+                            if(settings.filterOptions.filter_rules.length > 0) {
                                 // mark filter toggle as active
                                 elem_filter_toggle.addClass(settings.filterToggleActiveClass);
                             }
@@ -693,13 +696,13 @@
                         switch(btn_index) {
                             case 0:
                                 //elem_filter_rules.jui_filter_rules("markAllRulesAsApplied");
-                                elem.data(pluginStatus)["filter_rules"] = a_rules;
+                                settings.filterOptions.filter_rules = a_rules;
                                 // Reset selected rows
-                                elem.data(pluginStatus)["selected_ids"] = [];
+                                settings.selected_ids = [];
                                 break;
                             case 1:
                                 elem_filter_rules.jui_filter_rules("clearAllRules");
-                                elem.data(pluginStatus)["filter_rules"] = [];
+                                settings.filterOptions.filter_rules = [];
                                 break;
                         }
                         settings.pageNum = 1;
@@ -717,7 +720,7 @@
          * @returns {string}
          */
         getVersion: function() {
-            return "0.9.1";
+            return "0.9.2";
         },
 
         /**
@@ -732,14 +735,14 @@
                 maxRowsPerPage: 100,
                 row_primary_key: "",
                 rowSelectionMode: "single", // "multiple", "single", false
+                selected_ids: [],
 
                 /**
                  * MANDATORY PROPERTIES: field
                  * UNIQUE PROPERTIES: field
                  * {field: "customer_id", header: "Code", visible: "no", is_function: "no", "headerClass": "th_code hidden-xs", "dataClass": "td_code hidden-xs"},
                  */
-                columns: [
-                ],
+                columns: [],
 
                 /**
                  * MANDATORY PROPERTIES: field, order
@@ -747,11 +750,10 @@
                  * order is one of "ascending", "descending", "none"
                  * {sortingName: "Code", field: "customer_id", order: "none"},
                  */
-                sorting: [
-                ],
+                sorting: [],
 
                 /**
-                 * SEE bs_pagination plugin documentation
+                 * See bs_pagination plugin documentation
                  */
                 paginationOptions: {
                     containerClass: "well pagination-container",
@@ -764,11 +766,12 @@
                 }, // "currentPage", "rowsPerPage", "maxRowsPerPage", "totalPages", "totalRows", "bootstrap_version", "onChangePage" will be ignored
 
                 /**
-                 * SEE jui_filter_rules plugin documentation
+                 * See jui_filter_rules plugin documentation
                  */
                 filterOptions: {
-                    filters: []
-                }, // "bootstrap_version", "onValidationError" will be ignored
+                    filters: [],
+                    filter_rules: []
+                }, // "bootstrap_version", "onSetRules", "onValidationError" will be ignored
 
                 useFilters: true,
                 showRowNumbers: false,
@@ -924,6 +927,7 @@
         selectedRows: function(action, id) {
             var elem = this,
                 container_id = elem.attr("id"),
+                s = methods.getAllOptions.call(elem),
                 table_id = create_id(methods.getOption.call(elem, "table_id_prefix"), container_id),
                 selectedTrClass = methods.getOption.call(elem, "selectedTrClass"),
                 selector_table_tr = "#" + table_id + " tbody tr",
@@ -931,23 +935,23 @@
 
             switch(action) {
                 case "get_ids":
-                    return elem.data(pluginStatus)["selected_ids"];
+                    return s.selected_ids;
                     break;
                 case "clear_all_ids":
-                    elem.data(pluginStatus)["selected_ids"] = [];
+                    s.selected_ids = [];
                     break;
                 case "update_counter":
                     var selected_rows_id = create_id(methods.getOption.call(elem, "selected_rows_id_prefix"), container_id);
-                    $("#" + selected_rows_id).text(elem.data(pluginStatus)["selected_ids"].length);
+                    $("#" + selected_rows_id).text(s.selected_ids.length);
                     break;
                 case "selected_index":
-                    return $.inArray(id, elem.data(pluginStatus)["selected_ids"]);
+                    return $.inArray(id, s.selected_ids);
                     break;
                 case "add_id":
-                    elem.data(pluginStatus)["selected_ids"].push(id);
+                    s.selected_ids.push(id);
                     break;
                 case "remove_id":
-                    elem.data(pluginStatus)["selected_ids"].splice(id, 1);
+                    s.selected_ids.splice(id, 1);
                     break;
                 case "mark_selected":
                     $(table_tr_prefix + id).addClass(selectedTrClass);
@@ -1012,211 +1016,230 @@
 
         displayGrid: function(refresh_pag) {
 
-        var elem = this,
-            container_id = elem.attr("id"),
-            s = methods.getAllOptions.call(elem),
+            var elem = this,
+                container_id = elem.attr("id"),
+                s = methods.getAllOptions.call(elem),
 
-            table_id = create_id(s.table_id_prefix, container_id),
-            elem_table = $("#" + table_id),
-            no_results_id = create_id(s.no_results_id_prefix, container_id),
-            elem_no_results = $("#" + no_results_id),
-            filter_rules_id = create_id(s.filter_rules_id_prefix, container_id),
-            pagination_id = create_id(s.pagination_id_prefix, container_id),
-            elem_pagination = $("#" + pagination_id),
-            err_msg;
+                table_id = create_id(s.table_id_prefix, container_id),
+                elem_table = $("#" + table_id),
+                no_results_id = create_id(s.no_results_id_prefix, container_id),
+                elem_no_results = $("#" + no_results_id),
+                filter_rules_id = create_id(s.filter_rules_id_prefix, container_id),
+                pagination_id = create_id(s.pagination_id_prefix, container_id),
+                elem_pagination = $("#" + pagination_id),
+                err_msg;
 
-        // fetch page data and display datagrid
-        var res = $.ajax({
-            type: "POST",
-            url: s.ajaxFetchDataURL,
-            data: {
-                page_num: s.pageNum,
-                rows_per_page: s.rowsPerPage,
-                columns: s.columns,
-                sorting: s.sorting,
-                filter_rules: elem.data(pluginStatus)["filter_rules"],
-                debug_mode: s.debug_mode
-            },
-            dataType: "json",
-            success: function(data) {
-                var server_error, filter_error, row_primary_key, total_rows, page_data, page_data_len, v,
-                    columns = s.columns,
-                    col_len = columns.length,
-                    column, c;
+            // fetch page data and display datagrid
+            var res = $.ajax({
+                type: "POST",
+                url: s.ajaxFetchDataURL,
+                data: {
+                    page_num: s.pageNum,
+                    rows_per_page: s.rowsPerPage,
+                    columns: s.columns,
+                    sorting: s.sorting,
+                    filter_rules: s.filterOptions.filter_rules,
+                    debug_mode: s.debug_mode
+                },
+                dataType: "json",
+                success: function(data) {
+                    var server_error, filter_error, row_primary_key, total_rows, page_data, page_data_len, v,
+                        columns = s.columns,
+                        col_len = columns.length,
+                        column, c;
 
-                server_error = data["error"];
-                if(server_error != null) {
-                    err_msg = "ERROR: " + server_error;
-                    elem.html('<span style="color: red;">' + err_msg + '</span>');
-                    elem.triggerHandler("onDatagridError", {err_code: "server_error", err_description: server_error});
-                    $.error(err_msg);
-                }
-
-                if(s.useFilters) {
-                    var elem_filter_rules = $("#" + filter_rules_id);
-                    filter_error = data["filter_error"];
-                    if(filter_error["error_message"] != null) {
-                        elem_filter_rules.jui_filter_rules("markRuleAsError", filter_error["element_rule_id"], true);
-                        elem_filter_rules.triggerHandler("onValidationError", {err_code: "filter_validation_server_error", err_description: filter_error["error_message"]});
-                        $.error(filter_error["error_message"]);
+                    server_error = data["error"];
+                    if(server_error != null) {
+                        err_msg = "ERROR: " + server_error;
+                        elem.html('<span style="color: red;">' + err_msg + '</span>');
+                        elem.triggerHandler("onDatagridError", {err_code: "server_error", err_description: server_error});
+                        $.error(err_msg);
                     }
-                }
 
-                total_rows = data["total_rows"];
-                page_data = data["page_data"];
-                page_data_len = page_data.length;
+                    if(s.useFilters) {
+                        var elem_filter_rules = $("#" + filter_rules_id);
+                        filter_error = data["filter_error"];
+                        if(filter_error["error_message"] != null) {
+                            elem_filter_rules.jui_filter_rules("markRuleAsError", filter_error["element_rule_id"], true);
+                            elem_filter_rules.triggerHandler("onValidationError", {err_code: "filter_validation_server_error", err_description: filter_error["error_message"]});
+                            $.error(filter_error["error_message"]);
+                        }
+                    }
 
-                elem.data(pluginStatus)["total_rows"] = total_rows;
+                    total_rows = data["total_rows"];
+                    page_data = data["page_data"];
+                    page_data_len = page_data.length;
 
-                row_primary_key = s.row_primary_key;
+                    elem.data(pluginStatus)["total_rows"] = total_rows;
 
-                if(s.debug_mode == "yes") {
-                    elem.triggerHandler("onDebug", {debug_message: data["debug_message"]});
-                }
+                    row_primary_key = s.row_primary_key;
 
-                // replace null with empty string
-                if(page_data_len > 0) {
-                    for(v = 0; v < page_data_len; v++) {
-                        for(c = 0; c < col_len; c++) {
-                            column = columns[c];
-                            if(column_is_visible(column)) {
-                                if(page_data[v][column["field"]] == null) {
-                                    page_data[v][column["field"]] = '';
+                    if(s.debug_mode == "yes") {
+                        elem.triggerHandler("onDebug", {debug_message: data["debug_message"]});
+                    }
+
+                    // replace null with empty string
+                    if(page_data_len > 0) {
+                        for(v = 0; v < page_data_len; v++) {
+                            for(c = 0; c < col_len; c++) {
+                                column = columns[c];
+                                if(column_is_visible(column)) {
+                                    if(page_data[v][column["field"]] == null) {
+                                        page_data[v][column["field"]] = '';
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                // create data table
-                var pageNum = parseInt(s.pageNum),
-                    rowsPerPage = parseInt(s.rowsPerPage),
-                    sortingIndicator,
-                    row_id_html, i, row, tbl_html, row_index,
-                    offset = ((pageNum - 1) * rowsPerPage);
+                    // create data table
+                    var pageNum = parseInt(s.pageNum),
+                        rowsPerPage = parseInt(s.rowsPerPage),
+                        sortingIndicator,
+                        row_id_html, i, row, tbl_html, row_index,
+                        offset = ((pageNum - 1) * rowsPerPage);
 
-                tbl_html = '<thead>';
-                row_id_html = (row_primary_key ? ' id="' + table_id + '_tr_0"' : '');
-                tbl_html += '<tr' + row_id_html + '>';
-
-                if(s.showRowNumbers) {
-                    tbl_html += '<th class="' + s.commonThClass + '">' + rsc_bs_dg.row_index_header + '</th>';
-                }
-
-                for(i in s.columns) {
-                    if(column_is_visible(s.columns[i])) {
-                        sortingIndicator = "";
-                        if(s.showSortingIndicator) {
-                            var sorting_type = "none";
-                            for(var e in s.sorting) {
-                                if(s.sorting[e].field == s.columns[i].field) {
-                                    sorting_type = s.sorting[e].order;
-                                    break;
-                                }
-                            }
-                            switch(sorting_type) {
-                                case "ascending":
-                                    sortingIndicator = '&nbsp;<span class="' + s.sortingIndicatorAscClass + '"></span>';
-                                    break;
-                                case "descending":
-                                    sortingIndicator = '&nbsp;<span class="' + s.sortingIndicatorDescClass + '"></span>';
-                                    break;
-                                default:
-                                    sortingIndicator = '';
-                            }
-                        }
-                        tbl_html += '<th class="' + s.commonThClass + '">' + s.columns[i].header + sortingIndicator + '</th>';
-                    }
-                }
-                tbl_html += '</tr>';
-                tbl_html += '</thead>';
-
-                tbl_html += '<tbody>';
-                for(row in page_data) {
-
-                    row_id_html = (row_primary_key ? ' id="' + table_id + '_tr_' + page_data[row][row_primary_key] + '"' : '');
+                    tbl_html = '<thead>';
+                    row_id_html = (row_primary_key ? ' id="' + table_id + '_tr_0"' : '');
                     tbl_html += '<tr' + row_id_html + '>';
 
                     if(s.showRowNumbers) {
-                        row_index = offset + parseInt(row) + 1;
-                        tbl_html += '<td>' + row_index + '</td>';
+                        tbl_html += '<th class="' + s.commonThClass + '">' + rsc_bs_dg.row_index_header + '</th>';
                     }
 
                     for(i in s.columns) {
                         if(column_is_visible(s.columns[i])) {
-                            tbl_html += '<td>' + page_data[row][s.columns[i].field] + '</td>';
-                        }
-                    }
-
-                    tbl_html += '</tr>';
-                }
-                tbl_html += '<tbody>';
-
-                elem_table.html(tbl_html);
-
-                // refresh pagination (if needed)
-                if(refresh_pag) {
-                    elem_pagination.bs_pagination({
-                        currentPage: s.pageNum,
-                        totalPages: Math.ceil(total_rows / s.rowsPerPage),
-                        totalRows: total_rows
-                    });
-                }
-
-                // no results
-                if(total_rows == 0) {
-                    elem_pagination.hide();
-                    elem_no_results.show();
-                } else {
-                    elem_pagination.show();
-                    elem_no_results.hide();
-                }
-
-                // apply given styles ------------------------------------------
-                var col_index = s.showRowNumbers ? 1 : 0,
-                    headerClass = "", dataClass = "";
-                for(i in s.columns) {
-                    if(column_is_visible(s.columns[i])) {
-                        headerClass = "", dataClass = "";
-                        if(columns[i].hasOwnProperty("headerClass")) {
-                            headerClass = columns[i]["headerClass"];
-                        }
-                        if(columns[i].hasOwnProperty("dataClass")) {
-                            dataClass = columns[i]["dataClass"];
-                        }
-                        methods.setPageColClass.call(elem, col_index, headerClass, dataClass);
-                        col_index++;
-                    }
-                }
-
-                // apply row selections ----------------------------------------
-                if(s.row_primary_key && elem.data(pluginStatus)["selected_ids"].length > 0) {
-
-                    if(s.rowSelectionMode == "single" || s.rowSelectionMode == "multiple") {
-                        var row_prefix_len = (table_id + "_tr_").length,
-                            row_id, idx;
-                        $("#" + table_id + " tbody tr").each(function() {
-                            row_id = parseInt($(this).attr("id").substr(row_prefix_len));
-                            idx = methods.selectedRows.call(elem, "selected_index", row_id);
-                            if(idx > -1) {
-                                methods.selectedRows.call(elem, "mark_selected", row_id);
+                            sortingIndicator = "";
+                            if(s.showSortingIndicator) {
+                                var sorting_type = "none";
+                                for(var e in s.sorting) {
+                                    if(s.sorting[e].field == s.columns[i].field) {
+                                        sorting_type = s.sorting[e].order;
+                                        break;
+                                    }
+                                }
+                                switch(sorting_type) {
+                                    case "ascending":
+                                        sortingIndicator = '&nbsp;<span class="' + s.sortingIndicatorAscClass + '"></span>';
+                                        break;
+                                    case "descending":
+                                        sortingIndicator = '&nbsp;<span class="' + s.sortingIndicatorDescClass + '"></span>';
+                                        break;
+                                    default:
+                                        sortingIndicator = '';
+                                }
                             }
+                            tbl_html += '<th class="' + s.commonThClass + '">' + s.columns[i].header + sortingIndicator + '</th>';
+                        }
+                    }
+                    tbl_html += '</tr>';
+                    tbl_html += '</thead>';
+
+                    tbl_html += '<tbody>';
+                    for(row in page_data) {
+
+                        row_id_html = (row_primary_key ? ' id="' + table_id + '_tr_' + page_data[row][row_primary_key] + '"' : '');
+                        tbl_html += '<tr' + row_id_html + '>';
+
+                        if(s.showRowNumbers) {
+                            row_index = offset + parseInt(row) + 1;
+                            tbl_html += '<td>' + row_index + '</td>';
+                        }
+
+                        for(i in s.columns) {
+                            if(column_is_visible(s.columns[i])) {
+                                tbl_html += '<td>' + page_data[row][s.columns[i].field] + '</td>';
+                            }
+                        }
+
+                        tbl_html += '</tr>';
+                    }
+                    tbl_html += '<tbody>';
+
+                    elem_table.html(tbl_html);
+
+                    // refresh pagination (if needed)
+                    if(refresh_pag) {
+                        elem_pagination.bs_pagination({
+                            currentPage: s.pageNum,
+                            totalPages: Math.ceil(total_rows / s.rowsPerPage),
+                            totalRows: total_rows
                         });
                     }
+
+                    // no results
+                    if(total_rows == 0) {
+                        elem_pagination.hide();
+                        elem_no_results.show();
+                    } else {
+                        elem_pagination.show();
+                        elem_no_results.hide();
+                    }
+
+                    // apply given styles ------------------------------------------
+                    var col_index = s.showRowNumbers ? 1 : 0,
+                        headerClass = "", dataClass = "";
+                    for(i in s.columns) {
+                        if(column_is_visible(s.columns[i])) {
+                            headerClass = "", dataClass = "";
+                            if(columns[i].hasOwnProperty("headerClass")) {
+                                headerClass = columns[i]["headerClass"];
+                            }
+                            if(columns[i].hasOwnProperty("dataClass")) {
+                                dataClass = columns[i]["dataClass"];
+                            }
+                            methods.setPageColClass.call(elem, col_index, headerClass, dataClass);
+                            col_index++;
+                        }
+                    }
+
+                    // apply row selections ----------------------------------------
+                    if(s.row_primary_key && s.selected_ids.length > 0) {
+
+                        if(s.rowSelectionMode == "single" || s.rowSelectionMode == "multiple") {
+                            var row_prefix_len = (table_id + "_tr_").length,
+                                row_id, idx;
+                            $("#" + table_id + " tbody tr").each(function() {
+                                row_id = parseInt($(this).attr("id").substr(row_prefix_len));
+                                idx = methods.selectedRows.call(elem, "selected_index", row_id);
+                                if(idx > -1) {
+                                    methods.selectedRows.call(elem, "mark_selected", row_id);
+                                }
+                            });
+                        }
+                    }
+
+                    // update selected rows counter
+                    methods.selectedRows.call(elem, "update_counter");
+
+                    // trigger event onDisplay
+                    elem.triggerHandler("onDisplay");
+
                 }
+            });
 
-                // update selected rows counter
-                methods.selectedRows.call(elem, "update_counter");
+            return res;
 
-                // trigger event onDisplay
-                elem.triggerHandler("onDisplay");
+        },
 
-            }
-        });
+        /**
+         * Get datagrid snapshot (current status: row selections, pagination, filters)
+         * @returns {*}
+         */
+        takeSnapshot: function() {
+            var elem = this;
+            return $.extend(true, {}, methods.getAllOptions.call(elem));
+        },
 
-        return res;
-
-    }
+        /**
+         * Restore taken snaphot
+         * @param {obj} params
+         */
+        restoreSnapshot: function(params) {
+            var elem = this;
+            elem.removeData(pluginName);
+            methods.init.call(elem, params);
+        }
 
     };
 
