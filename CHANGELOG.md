@@ -12,6 +12,11 @@ Copyright Christos Pontikis [http://www.pontikis.net][copyright]
 License [MIT][mit]
 [mit]: https://raw.github.com/pontikis/bs_grid/master/MIT_LICENSE
 
+Release 0.9.2 (28 May 2014)
+---------------------------
+* Set rules (predefined filters)
+* Take and Restore snapshots (`takeSnapshot` and `restoreSnapshot` methods)
+
 Release 0.9.1 (09 May 2014)
 ---------------------------
 * Created for Bootstrap 3 (Bootstrap 2 supported)
