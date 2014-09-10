@@ -215,6 +215,17 @@ class bs_grid {
 	 */
 	public function get_page_data() {
 
+		$fixed_where = null;
+		if(array_key_exists('fixed_where', $this->page_settings)) {
+			$fixed_where = $this->page_settings['fixed_where'];
+		}
+
+		$fixed_bind_params = null;
+		if(array_key_exists('fixed_where', $this->page_settings)) {
+			$fixed_bind_params = $this->page_settings['fixed_bind_params'];
+		}
+
+
 		$total_rows = null;
 		$a_data = null;
 
@@ -231,6 +242,21 @@ class bs_grid {
 		if(array_key_exists('error_message', $where)) {
 			$this->last_filter_error = $where;
 		} else {
+
+			if($fixed_where) {
+				$tmp_where = $fixed_where;
+				if($where['sql']) {
+					$tmp_where .= ' AND (' . mb_substr($where['sql'], 6) . ')';
+				}
+				$where['sql'] = $tmp_where;
+			}
+
+			if($fixed_bind_params) {
+				$reversed = array_reverse($fixed_bind_params);
+				foreach($reversed as $param) {
+				array_unshift($where['bind_params'], $param);
+				}
+			}
 
 			$total_rows = $this->get_total_rows($this->page_settings['selectCountSQL'],
 				$where['sql'], $where['bind_params']);
