@@ -285,4 +285,90 @@ class bs_grid {
 		return $result;
 	}
 
+
+	/**
+	 * Get all data
+	 *
+	 * @return array
+	 */
+	public function get_all_data() {
+
+		$fixed_where = null;
+		if(array_key_exists('fixed_where', $this->page_settings)) {
+			$fixed_where = $this->page_settings['fixed_where'];
+		}
+
+		$fixed_bind_params = null;
+		if(array_key_exists('fixed_where', $this->page_settings)) {
+			$fixed_bind_params = $this->page_settings['fixed_bind_params'];
+		}
+
+		$total_rows = null;
+		$a_data = null;
+
+		// initialize
+		$result = array(
+			'total_rows' => null,
+			'all_data' => null,
+			'error' => null,
+			'filter_error' => array(),
+			'debug_message' => array()
+		);
+
+		$where = $this->get_whereSQL($this->page_settings['filter_rules']);
+		if(array_key_exists('error_message', $where)) {
+			$this->last_filter_error = $where;
+		} else {
+
+			if($fixed_where) {
+				$tmp_where = $fixed_where;
+				if($where['sql']) {
+					$tmp_where .= ' AND (' . mb_substr($where['sql'], 6) . ')';
+				}
+				$where['sql'] = $tmp_where;
+			}
+
+			if($fixed_bind_params) {
+				$reversed = array_reverse($fixed_bind_params);
+				foreach($reversed as $param) {
+					array_unshift($where['bind_params'], $param);
+				}
+			}
+
+			$total_rows = $this->get_total_rows($this->page_settings['selectCountSQL'],
+				$where['sql'], $where['bind_params']);
+
+			if($total_rows !== false) {
+
+				// calculate sortingSQL
+				$sortingSQL = $this->get_sortingSQL($this->page_settings['sorting']);
+
+				$ds = $this->ds;
+
+				$sql = $this->page_settings['selectSQL'] . ' ' . $where['sql']. ' ' . $sortingSQL;
+				$res = $ds->select($sql, $where['bind_params']);
+				if(!$res) {
+					$this->last_error = $ds->last_error;
+					$a_data = false;
+				} else {
+					$a_data = $ds->data;
+				}
+
+				if($this->debug_mode) {
+					array_push($this->debug_message, 'selectSQL: ' . $this->page_settings['selectSQL']);
+				}
+
+			}
+		}
+
+		$result['total_rows'] = $total_rows;
+		$result['all_data'] = $a_data;
+		$result['error'] = $this->get_last_error();
+		$result['filter_error'] = $this->get_last_filter_error();
+		$result['debug_message'] = $this->get_debug_message();
+
+		return $result;
+	}
+
+
 }
