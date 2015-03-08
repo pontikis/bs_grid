@@ -1029,6 +1029,17 @@
                 elem_pagination = $("#" + pagination_id),
                 err_msg;
 
+            //create a copy of the columns
+            var tmpColumns = jQuery.extend(true, Array(), s.columns);
+
+            //null any callbacks so that they don't get called by jQuery
+            tmpColumns.forEach(function(e, i, a){
+                if(column_has_callback(e))
+                {
+                    e.callback = null;
+                }
+            });
+
             // fetch page data and display datagrid
             var res = $.ajax({
                 type: "POST",
@@ -1036,7 +1047,7 @@
                 data: {
                     page_num: s.pageNum,
                     rows_per_page: s.rowsPerPage,
-                    columns: s.columns,
+                    columns: tmpColumns,
                     sorting: s.sorting,
                     filter_rules: s.filterOptions.filter_rules,
                     debug_mode: s.debug_mode
@@ -1148,7 +1159,15 @@
 
                         for(i in s.columns) {
                             if(column_is_visible(s.columns[i])) {
-                                tbl_html += '<td>' + page_data[row][s.columns[i].field] + '</td>';
+                                //get the callback
+                                //default is to just return the data
+                                var cb = function (cb_record, cb_field){ return cb_record[cb_field]; };
+                                //check for a defined callback
+                                if(column_has_callback(s.columns[i]))
+                                    cb = s.columns[i].callback;
+
+                                //return fully processed data
+                                tbl_html += '<td>' + cb(page_data[row], s.columns[i].field) + '</td>';
                             }
                         }
 
@@ -1327,6 +1346,17 @@
     var column_is_function = function(column) {
         var is_function = "is_function";
         return column.hasOwnProperty(is_function) && column[is_function] == "yes";
+    };
+
+    /**
+     * Check if column has callback
+     *
+     * @param {object} column
+     * @returns {boolean}
+     */
+    var column_has_callback = function(column) {
+        var callback = "callback";
+        return column.hasOwnProperty(callback) && typeof column.callback === 'function';
     };
 
     /**
