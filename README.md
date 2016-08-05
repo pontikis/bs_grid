@@ -1,45 +1,87 @@
 bs_grid
 =======
 
-bs_grid is a jQuery Datagrid plugin, based on Twitter Bootstrap.
+forked from pontikis/bs_grid [https://github.com/pontikis/bs_grid]
 
-Copyright Christos Pontikis [http://www.pontikis.net][copyright]
-[copyright]: http://www.pontikis.net
+add features : checkbox, searchText ...
 
-License [MIT][mit]
-[mit]: https://raw.github.com/pontikis/bs_grid/master/MIT_LICENSE
-
-Release: 0.9.2 (28 May 2014) - View CHANGELOG [here][CHANGELOG]
-[CHANGELOG]: https://raw.github.com/pontikis/bs_grid/master/CHANGELOG.md
-
-
-Project page
------------
-[http://www.pontikis.net/labs/bs_grid][HOME]
-[HOME]: http://www.pontikis.net/labs/bs_grid
-
-Demo
-----
-[http://www.pontikis.net/labs/bs_grid/demo][DEMO]
-[DEMO]: http://www.pontikis.net/labs/bs_grid/demo
+Use
+---
+```javascript
+function initTable() {
+	var edit_td = '<button class="btn btn-warning btn-xs" name="edit" type="button" onClick="updateStationuser(event)">编辑</button>';
+	var ac_login_td = '<input type="checkbox" class="magic-checkbox" disabled="disabled" id="ac_login"><label for="ac_login"></label>';
+	$("#table").bs_grid({
+		ajaxFetchDataURL: "/rest/user/get",
+        row_primary_key: "id",
+		pageNum: 1,
+		rowsPerPage: 10,
+		maxRowsPerPage: 100,
+		enableBox: true,
+		enableTools: false,
+		searchText: function() {
+			var st = $("#tsb").val();
+			return st;
+		},
+		rowSelectionMode: "multiple", // "multiple", "single", false
+		columns: [ 
+		            {field: "fullname", header: "姓名"},
+		            {field: "number", header: "工号"},
+		            {field: "department", header: "部门"},
+		            {field: "position", header: "职位"},
+		            {field: "", header: "登录权限", is_function: "yes", "td_content" : ac_login_td},
+		            {field: "", header: "操作", is_function: "yes", "td_content" : edit_td},
+		            {field: "id", header: "id", visible: 'no'}
+		         ],
+		useFilters: false,
+		showRowNumbers: true,
+		showSortingIndicator: false,
+		useSortableLists: false,
+		paginationOptions: {
+		    containerClass: "well pagination-container",
+		    visiblePageLinks: 5,
+		    showGoToPage: true,
+		    showRowsPerPage: true,
+		    showRowsInfo: false,
+		    showRowsDefaultInfo: false,
+		    disableTextSelectionInNavPane: false
+		  },
+	    noResultsClass: "alert alert-warning no-records-found",
+	    dataTableClass: "table table-striped table-hover",
+		onDisplay: function() {
+			$("#tools_table").remove();
+		},
+		onCellClick: function(event, data) {
+			var $box = $("#box" + ++data.row);
+			var check = $box.prop("checked");
+			if (check) {
+				$box.prop("checked", false).closest("tr").removeClass("bg-danger");
+			} else {
+				$box.prop("checked", true).closest("tr").addClass("bg-danger");
+			}
+		}
+	});
+}
+```
 
 Documentation
 -------------
 [http://www.pontikis.net/labs/bs_grid/docs][DOCS]
 [DOCS]: http://www.pontikis.net/labs/bs_grid/docs
 
-Support Forum
--------------
-[http://www.pontikis.net/bbs][FORUM]
-[FORUM]: http://www.pontikis.net/bbs
-
-Download
---------
-Download [here][DOWNLOAD]
-[DOWNLOAD]: https://github.com/pontikis/bs_grid/archive/master.zip
-
 
 Screenshots
 -----------
+demo:
+
+![sample2](screenshots/sample2.png) 
+
+![sample3](screenshots/sample3.png)  
+
+![sample4](screenshots/sample4.png)  
+
+
+old:
+
 ![bs_grid sample1][sample1]
 [sample1]: https://raw.github.com/pontikis/bs_grid/master/screenshots/sample1.png
