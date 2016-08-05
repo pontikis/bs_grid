@@ -129,7 +129,9 @@
                     elem_html = "", tools_html = "";
 
                 // create basic html structure ---------------------------------
-                elem_html += '<div id="' + tools_id + '" class="' + settings.toolsClass + '"></div>';
+                if (settings.enableTools) {
+                	elem_html += '<div id="' + tools_id + '" class="' + settings.toolsClass + '"></div>';
+                }
 
                 elem_html += '<div id="' + table_container_id + '" class="' + settings.dataTableContainerClass + '">';
                 elem_html += '<table id="' + table_id + '" class="' + settings.dataTableClass + '"></table>';
@@ -279,8 +281,9 @@
                 if(settings.useFilters) {
                     tools_html += '<button id="' + filter_toggle_id + '" class="btn btn-default pull-right" title="' + rsc_bs_dg.filters + '"><span class="' + settings.filterToggleButtonIconClass + '"></span></button>';
                 }
-
-                elem_tools.html(tools_html);
+                if(settings.enableTools) {
+                	elem_tools.html(tools_html);
+                }
 
                 // initialize grid ---------------------------------------------
                 var grid_init = methods.displayGrid.call(elem, false);
@@ -734,6 +737,8 @@
                 rowsPerPage: 10,
                 maxRowsPerPage: 100,
                 row_primary_key: "",
+                enableBox: true,
+                enableTools: false,
                 rowSelectionMode: "single", // "multiple", "single", false
                 selected_ids: [],
 
@@ -760,9 +765,9 @@
                     visiblePageLinks: 5,
                     showGoToPage: true,
                     showRowsPerPage: true,
-                    showRowsInfo: true,
-                    showRowsDefaultInfo: true,
-                    disableTextSelectionInNavPane: true
+                    showRowsInfo: false,
+                    showRowsDefaultInfo: false,
+                    disableTextSelectionInNavPane: false
                 }, // "currentPage", "rowsPerPage", "maxRowsPerPage", "totalPages", "totalRows", "bootstrap_version", "onChangePage" will be ignored
 
                 /**
@@ -773,10 +778,10 @@
                     filter_rules: []
                 }, // "bootstrap_version", "onSetRules", "onValidationError" will be ignored
 
-                useFilters: true,
-                showRowNumbers: false,
-                showSortingIndicator: true,
-                useSortableLists: true,
+                useFilters: false,
+                showRowNumbers: true,
+                showSortingIndicator: false,
+                useSortableLists: false,
                 customHTMLelementID1: "",
                 customHTMLelementID2: "",
 
@@ -1036,10 +1041,12 @@
                 data: {
                     page_num: s.pageNum,
                     rows_per_page: s.rowsPerPage,
-                    columns: s.columns,
-                    sorting: s.sorting,
-                    filter_rules: s.filterOptions.filter_rules,
-                    debug_mode: s.debug_mode
+                    //columns: s.columns,
+                    //sorting: s.sorting,
+                    //filter_rules: s.filterOptions.filter_rules,
+                    search_text: s.searchText,
+                    debug_mode: s.debug_mode,
+                    extParam: s.extParam
                 },
                 dataType: "json",
                 success: function(data) {
@@ -1102,7 +1109,9 @@
                     tbl_html = '<thead>';
                     row_id_html = (row_primary_key ? ' id="' + table_id + '_tr_0"' : '');
                     tbl_html += '<tr' + row_id_html + '>';
-
+                    if (s.enableBox) {
+                    	tbl_html += '<td><input class="magic-checkbox" type="checkbox" id="box0" onClick="toggleAll()"></input><label for="box0"></label></td>';
+                    }
                     if(s.showRowNumbers) {
                         tbl_html += '<th class="' + s.commonThClass + '">' + rsc_bs_dg.row_index_header + '</th>';
                     }
@@ -1130,6 +1139,8 @@
                                 }
                             }
                             tbl_html += '<th class="' + s.commonThClass + '">' + s.columns[i].header + sortingIndicator + '</th>';
+                        } else {
+                        	tbl_html += '<th class="' + s.commonThClass + '" style="display:none">' + s.columns[i].header + '</th>';
                         }
                     }
                     tbl_html += '</tr>';
@@ -1141,20 +1152,32 @@
                         row_id_html = (row_primary_key ? ' id="' + table_id + '_tr_' + page_data[row][row_primary_key] + '"' : '');
                         tbl_html += '<tr' + row_id_html + '>';
 
+                        row_index = offset + parseInt(row) + 1;
+                        if (s.enableBox) {
+                        	//add checkbox
+                        	tbl_html += '<td><input class="magic-checkbox" type="checkbox" id="box'
+                        		+ row_index + '"></input><label for="box' + row_index + '"></label></td>';
+                        }
+                        
                         if(s.showRowNumbers) {
-                            row_index = offset + parseInt(row) + 1;
                             tbl_html += '<td>' + row_index + '</td>';
                         }
 
                         for(i in s.columns) {
+                        	if(column_is_function(s.columns[i])){
+                            	tbl_html += '<td>' + s.columns[i].td_content + '</td>';
+                            	continue;
+                            }
                             if(column_is_visible(s.columns[i])) {
                                 tbl_html += '<td>' + page_data[row][s.columns[i].field] + '</td>';
+                            } else {
+                            	tbl_html += '<td style="display:none">' + page_data[row][s.columns[i].field] + '</td>';
                             }
                         }
 
                         tbl_html += '</tr>';
                     }
-                    tbl_html += '<tbody>';
+                    tbl_html += '</tbody>';
 
                     elem_table.html(tbl_html);
 
@@ -1213,7 +1236,7 @@
                     methods.selectedRows.call(elem, "update_counter");
 
                     // trigger event onDisplay
-                    elem.triggerHandler("onDisplay");
+                    elem.triggerHandler("onDisplay",page_data);
 
                 }
             });
