@@ -7,6 +7,7 @@ add features : checkbox, searchText ...
 
 Use
 ---
+```javascript
 function initTable() {
 	var edit_td = '<button class="btn btn-warning btn-xs" name="edit" type="button" onClick="updateStationuser(event)">编辑</button>';
 	var ac_login_td = '<input type="checkbox" class="magic-checkbox" disabled="disabled" id="ac_login"><label for="ac_login"></label>';
@@ -61,6 +62,7 @@ function initTable() {
 		}
 	});
 }
+```
 
 Documentation
 -------------
@@ -72,9 +74,11 @@ Screenshots
 -----------
 demo:
 
-![sample2]:(screenshots/sample2.png)
-![sample3]:(screenshots/sample3.png)
-![sample4]:(screenshots/sample4.png)
+![sample2](screenshots/sample2.png) 
+
+![sample3](screenshots/sample3.png)  
+
+![sample4](screenshots/sample4.png)  
 
 
 old:
