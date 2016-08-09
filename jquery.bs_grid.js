@@ -1059,7 +1059,7 @@
                     if(s.useFilters) {
                         var elem_filter_rules = $("#" + filter_rules_id);
                         filter_error = data["filter_error"];
-                        if(filter_error["error_message"] != null) {
+                        if(filter_error != null && filter_error["error_message"] != null) {
                             elem_filter_rules.jui_filter_rules("markRuleAsError", filter_error["element_rule_id"], true);
                             elem_filter_rules.triggerHandler("onValidationError", {err_code: "filter_validation_server_error", err_description: filter_error["error_message"]});
                             $.error(filter_error["error_message"]);
